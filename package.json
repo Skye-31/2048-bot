@@ -1,0 +1,34 @@
+{
+	"name": "2048-bot",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"cf-typegen": "wrangler types",
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"format": "prettier . --write",
+		"set-commands": "node --loader ts-node/esm register-commands.ts",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"tunnel": "cloudflared tunnel --url localhost:8787 --name 2048bot-dev"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.4.28",
+		"@cloudflare/workers-types": "^4.20240903.0",
+		"@ianvs/prettier-plugin-sort-imports": "^4.3.1",
+		"discord-api-types": "^0.37.99",
+		"dotenv": "^16.4.5",
+		"prettier": "^3.3.3",
+		"prettier-plugin-packagejson": "^2.5.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.5.4",
+		"vitest": "1.5.0",
+		"wrangler": "^3.74.0"
+	},
+	"pnpm": {
+		"patchedDependencies": {
+			"discord-api-types": "patches/discord-api-types.patch"
+		}
+	}
+}

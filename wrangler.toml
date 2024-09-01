@@ -1,0 +1,8 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "2048-bot"
+main = "src/index.ts"
+compatibility_date = "2024-08-21"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+route = { custom_domain = true, zone_name = "skye-does.dev", pattern = "2048-bot.skye-does.dev" }
