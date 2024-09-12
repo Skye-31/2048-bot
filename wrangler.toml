@@ -6,3 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
 route = { custom_domain = true, zone_name = "skye-does.dev", pattern = "2048-bot.skye-does.dev" }
+
+[observability]
+enabled = true
+head_sampling_rate = 1
