@@ -1,5 +1,3 @@
-import assert from 'node:assert';
-import { inspect } from 'node:util';
 import {
 	ApplicationCommandOptionType,
 	ApplicationCommandType,
@@ -11,10 +9,23 @@ import {
 } from 'discord-api-types/v10';
 import dotenv from 'dotenv';
 
+declare global {
+	const process: {
+		env: Record<string, string | undefined>;
+		exit: (code?: number) => never;
+	};
+}
+
 dotenv.config({ path: '.dev.vars' });
 
-assert(process.env.BOT_ID, 'Set BOT_ID');
-assert(process.env.BOT_TOKEN, 'Set BOT_TOKEN');
+if (!process.env.BOT_ID) {
+	console.error('Set BOT_ID env variable');
+	process.exit(1);
+}
+if (!process.env.BOT_TOKEN) {
+	console.error('Set BOT_TOKEN env variable');
+	process.exit(1);
+}
 
 const commands: Omit<APIApplicationCommand, 'id' | 'application_id' | 'version'>[] = [
 	{
@@ -44,4 +55,4 @@ const res = await fetch(RouteBases.api + Routes.applicationCommands(process.env.
 });
 
 console.log(res.status);
-console.log(inspect(await res.json(), undefined, Infinity));
+console.log(JSON.stringify(await res.json(), null, '\t'));

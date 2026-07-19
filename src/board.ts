@@ -1,13 +1,13 @@
 import { APIButtonComponent, APIMessage, ButtonStyle, ComponentType, MessageFlags, RouteBases, Routes } from 'discord-api-types/v10';
+import { waitUntil } from 'cloudflare:workers';
 import type {
 	APIActionRowComponent,
 	APIButtonComponentWithCustomId,
 	APIInteraction,
 	APIInteractionResponseCallbackData,
-	APIMessageActionRowComponent,
 	RESTPostAPIInteractionFollowupJSONBody,
+	APIComponentInMessageActionRow,
 } from 'discord-api-types/v10';
-import { als } from '.';
 
 // Credit: https://taftcreates.itch.io/2048-assets
 const emojis: Record<string | number, string> = {
@@ -177,7 +177,7 @@ export class Game2048 {
 		return true;
 	}
 
-	public toDiscordMessage(): APIInteractionResponseCallbackData {
+	public toDiscordMessage(interaction: APIInteraction): APIInteractionResponseCallbackData {
 		let str = '';
 		for (let row of this.grid) {
 			str += '\n' + row.map(numberToEmoji).join(' ');
@@ -185,7 +185,7 @@ export class Game2048 {
 
 		const { isGameOver, score } = this;
 
-		const components: APIActionRowComponent<APIMessageActionRowComponent>[] = isGameOver
+		const components: APIActionRowComponent<APIComponentInMessageActionRow>[] = isGameOver
 			? []
 			: [
 					{
@@ -212,8 +212,7 @@ export class Game2048 {
 				];
 
 		if (isGameOver) {
-			const { ctx, interaction } = als.getStore()!;
-			ctx.waitUntil(
+			waitUntil(
 				sendScoreFollowup(interaction, {
 					content: `You achieved a total score of ${score}!`,
 					flags: MessageFlags.Ephemeral,
@@ -237,7 +236,10 @@ export class Game2048 {
 
 		const game = new this(size);
 		game.grid = board;
-		game.score = parseInt((message.components![1].components[1] as APIButtonComponentWithCustomId).label as string);
+		game.score = parseInt(
+			((message.components?.[1] as APIActionRowComponent<APIComponentInMessageActionRow>).components?.[1] as APIButtonComponentWithCustomId)
+				.label as string,
+		);
 
 		return game;
 	}

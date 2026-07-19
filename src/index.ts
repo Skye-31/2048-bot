@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { ApplicationCommandType, ComponentType, InteractionResponseType, InteractionType } from 'discord-api-types/v10';
 import type { APIApplicationCommandInteractionDataIntegerOption, APIInteraction, APIInteractionResponse } from 'discord-api-types/v10';
 import { Direction, Game2048 } from './board';
@@ -6,24 +5,20 @@ import { verify } from './verify';
 
 const unauthenticated = () => new Response('Unauthenticated', { status: 401 });
 
-export const als = new AsyncLocalStorage<{ ctx: ExecutionContext; interaction: APIInteraction }>();
-
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		if (request.method !== 'POST') return unauthenticated();
 		if (!request.headers.get('X-Signature-Ed25519') || !request.headers.get('X-Signature-Timestamp')) return unauthenticated();
 		if (!(await verify(request, env.BOT_PUBLIC_KEY))) return unauthenticated();
 
-		const interaction = <APIInteraction>await request.json();
-
-		const response = await als.run({ ctx, interaction }, handle);
+		const interaction = await request.json<APIInteraction>();
+		const response = await handle(interaction);
 
 		return respond(response);
 	},
 } satisfies ExportedHandler<Env>;
 
-async function handle(): Promise<APIInteractionResponse> {
-	const { interaction } = als.getStore()!;
+async function handle(interaction: APIInteraction): Promise<APIInteractionResponse> {
 	switch (interaction.type) {
 		case InteractionType.Ping:
 			return {
@@ -31,11 +26,13 @@ async function handle(): Promise<APIInteractionResponse> {
 			};
 		case InteractionType.ApplicationCommand:
 			if (interaction.data.type === ApplicationCommandType.ChatInput) {
-				const option = interaction.data.options?.[0] as APIApplicationCommandInteractionDataIntegerOption | undefined;
+				const option = interaction.data.options?.[0] as
+					| APIApplicationCommandInteractionDataIntegerOption<InteractionType.ApplicationCommand>
+					| undefined;
 				const game = new Game2048(option?.value);
 				return {
 					type: InteractionResponseType.ChannelMessageWithSource,
-					data: game.toDiscordMessage(),
+					data: game.toDiscordMessage(interaction),
 				};
 			}
 			break;
@@ -53,7 +50,7 @@ async function handle(): Promise<APIInteractionResponse> {
 
 						return {
 							type: InteractionResponseType.UpdateMessage,
-							data: game.toDiscordMessage(),
+							data: game.toDiscordMessage(interaction),
 						};
 					}
 				}
